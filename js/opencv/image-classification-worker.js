@@ -15,6 +15,8 @@
  * @type {string}
  */
 
+var opencv;
+
 // Take vendor prefixes in account.
 self.postMessage = self.webkitPostMessage || self.postMessage;
 
@@ -40,9 +42,13 @@ var dnnInstance = null;
 
 /**
  * Helper function for logging to get information about source worker.
+ *
  * @return {string}
+ *   Returns source for logging messages.
  */
 function source() {
+  'use strict';
+
   return 'Classification Worker';
 }
 
@@ -53,8 +59,11 @@ function source() {
  *   console.log.apply(console, event.data.msg);
  *
  * @param {string} msg
+ *   Message that should be logged.
  */
 function log(msg) {
+  'use strict';
+
   self.postMessage({
     type: 'debug',
     source: source(),
@@ -65,11 +74,16 @@ function log(msg) {
 /**
  * Helper function to create files for OpenCV.
  *
- * @param in_memory_path
- * @param url
- * @param callback
+ * @param {string} in_memory_path
+ *   Path to file that will be stored in memory.
+ * @param {string} url
+ *   Url for file.
+ * @param {function} callback
+ *   Callback function when file is stored.
  */
 function createFileFromUrl(in_memory_path, url, callback) {
+  'use strict';
+
   var request = new XMLHttpRequest();
 
   request.open('GET', url, true);
@@ -77,12 +91,14 @@ function createFileFromUrl(in_memory_path, url, callback) {
   request.onload = function () {
     if (request.readyState === 4) {
       if (request.status === 200) {
+        // eslint-disable-next-line no-undef
         var data = new Uint8Array(request.response);
-        cv.FS_createDataFile('/', in_memory_path, data, true, false, false);
+        opencv.FS_createDataFile('/', in_memory_path, data, true, false, false);
 
         callback();
       }
       else {
+        // eslint-disable-next-line no-console
         console.log('Failed to load ' + url + ' status: ' + request.status);
       }
     }
@@ -94,9 +110,12 @@ function createFileFromUrl(in_memory_path, url, callback) {
 /**
  * Function to load model files.
  *
- * @param modelName
+ * @param {string} modelName
+ *   Model name for classification.
  */
 function loadModel(modelName) {
+  'use strict';
+
   var configFile = modelName + '.json';
 
   // TODO: Move information to JSON file.
@@ -106,22 +125,22 @@ function loadModel(modelName) {
   createFileFromUrl(configFile, baseModelsPath + configFile, function () {
     createFileFromUrl(modelFile, baseModelsPath + modelFile, function () {
       createFileFromUrl(weightsFile, baseModelsPath + weightsFile, function () {
-        configuration = JSON.parse(cv.read(baseModelsPath + configFile));
+        configuration = JSON.parse(opencv.read(baseModelsPath + configFile));
 
         switch (configuration.type) {
           case 'tensorflow':
-            dnnInstance = cv.readNetFromTensorflow(weightsFile, modelFile);
+            dnnInstance = opencv.readNetFromTensorflow(weightsFile, modelFile);
             break;
 
           // TODO: Add Caffe support.
           case 'caffe':
-            dnnInstance = cv.readNetFromCaffe(modelFile, weightsFile);
+            dnnInstance = opencv.readNetFromCaffe(modelFile, weightsFile);
             break;
         }
 
         // Post worker message
         self.postMessage({
-          'type': 'ready'
+          type: 'ready'
         });
       });
     });
@@ -131,23 +150,25 @@ function loadModel(modelName) {
 /**
  * Execute image classification.
  *
- * @param imageData
- *
- * @return {Array}
+ * @param {array} imageData
+ *   Binary image data.
  */
 function executeClassification(imageData) {
-  var i, n;
+  'use strict';
+
+  var i;
+  var n;
   var image_config = configuration.image;
   var classification_tags = configuration.tags;
   var output_config = configuration.output;
 
   // Prepare image data for usage in Open CV library.
-  var matImage = cv.matFromImageData(imageData);
-  var frameBGR = new cv.Mat(imageData.height, imageData.width, cv.CV_8UC3);
-  cv.cvtColor(matImage, frameBGR, cv.COLOR_RGBA2BGR);
+  var matImage = opencv.matFromImageData(imageData);
+  var frameBGR = new opencv.Mat(imageData.height, imageData.width, opencv.CV_8UC3);
+  opencv.cvtColor(matImage, frameBGR, opencv.COLOR_RGBA2BGR);
 
   // Get image data for DNN input.
-  var dnnInput = cv.blobFromImage(
+  var dnnInput = opencv.blobFromImage(
     frameBGR,
     image_config.scale,
     image_config.size,
@@ -174,17 +195,20 @@ function executeClassification(imageData) {
 
   // Send list of faces from this worker to the page.
   self.postMessage({
-    'type': 'finished',
-    'classifications': classifications
+    type: 'finished',
+    classifications: classifications
   });
 }
 
 /**
  * On message handler.
  *
- * @param event
+ * @param {object} event
+ *   Message event for Worker.
  */
 self.onmessage = function (event) {
+  'use strict';
+
   switch (event.data.type) {
     case 'load':
       log('Loading model: ' + event.data.model_name);
@@ -201,15 +225,19 @@ self.onmessage = function (event) {
 log('Initialization started');
 
 // Create Worker with importing OpenCV library.
+// eslint-disable-next-line no-undef
 importScripts('opencv_js.js');
 
 // cv() - will be provided from OpenCV library.
+// eslint-disable-next-line no-undef
 cv()
   .then(function (cv_) {
-    cv = cv_;
+    'use strict';
+
+    opencv = cv_;
 
     // Post worker message
     self.postMessage({
-      'type': 'init'
+      type: 'init'
     });
-  })
+  });

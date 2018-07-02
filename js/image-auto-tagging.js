@@ -1,14 +1,20 @@
 (function ($, Drupal, drupalSettings) {
 
+  'use strict';
+
   /**
    * Helper method for calculation of time.
    *
    * @return {string}
+   *   Returns time.
    */
   var time = function () {
     var now = new Date();
     var time = /(\d+:\d+:\d+)/.exec(now)[0] + ':';
-    for (var ms = String(now.getMilliseconds()), i = ms.length - 3; i < 0; ++i) {
+    var i;
+    var ms;
+
+    for (ms = String(now.getMilliseconds()), i = ms.length - 3; i < 0; ++i) {
       time += '0';
     }
 
@@ -18,12 +24,15 @@
   /**
    * Helper function for a bit nicer logging.
    *
-   * @param msg
-   * @param source
+   * @param {string} msg
+   *   Message that will be logged.
+   * @param {string} source
+   *   Source of logging message. Used for separating log messages.
    */
   var bitNicerLog = function (msg, source) {
     source = source || 'Base';
 
+    // eslint-disable-next-line no-console
     console.log('%c[' + time() + '] %c' + source + ': %c' + msg,
       'color: #87CEEB;',
       'color: #CD5C5C;',
@@ -41,7 +50,7 @@
       $.each(drupalSettings.dropzonejs.instances, function (dropzoneId) {
         $('#' + dropzoneId)
           .once('init-auto-tagging')
-          .addClass('image-auto-tagging__initializing-dropzone')
+          .addClass('image-auto-tagging__initializing-dropzone');
       });
     }
   };
@@ -149,18 +158,17 @@
 
         break;
 
-      case "ready":
+      case 'ready':
         onWorkerReady();
 
         break;
 
-      case "finished":
+      case 'finished':
         var classification_time = (new Date()) - timers.start_classify_image;
-        bitNicerLog('Got classifications: ' + classification_time + 'ms');
-        console.log(event.data.classifications);
+        bitNicerLog('Got classifications: ' + classification_time + 'ms - result: ' + event.data.classifications.join(', '));
 
         classifiedImages.push({
-          'classifications': $.unique(event.data.classifications)
+          classifications: $.unique(event.data.classifications)
         });
 
         // If whole queue is processes, try to fill form with classifications.
