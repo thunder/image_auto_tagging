@@ -1,0 +1,7 @@
+name: 'Image Auto Tagging'
+type: module
+description: 'Auto tagging for Images'
+core: 8.x
+package: 'Media'
+dependencies:
+  - dropzonejs_eb_widget:dropzonejs_eb_widget

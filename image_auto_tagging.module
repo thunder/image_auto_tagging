@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ * Contains hooks for Image auto tagging module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_alter().
+ */
+function image_auto_tagging_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if (strpos($form_id, 'entity_browser') === 0 && !empty($form['widget']['upload']['#type']) && $form['widget']['upload']['#type'] === 'dropzonejs') {
+//    $form['widget']['upload']['#attached']['library'][] = 'image_auto_tagging/image_auto_tagging';
+//    $form['widget']['upload']['#attached']['drupalSettings']['image_auto_tagging']['path'] = drupal_get_path('module', 'image_auto_tagging');
+  }
+}

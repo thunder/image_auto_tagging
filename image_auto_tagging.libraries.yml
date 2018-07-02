@@ -1,0 +1,10 @@
+image_auto_tagging:
+  js:
+    js/image-auto-tagging.js: {}
+  css:
+    theme:
+      css/image-auto-tagging.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once
